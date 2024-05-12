@@ -32,14 +32,21 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        const infoCollection = client.db('volunteerDB').collection('information');
+        const postCollection = client.db('volunteerDB').collection('posts');
 
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
-        // Get all info from db
-        app.get('/info', async (req, res) => {
-            const result = await infoCollection.find().toArray();
+        // Get all posts from db
+        app.get('/posts', async (req, res) => {
+            const result = await postCollection.find().toArray();
+            res.send(result);
+        })
+
+        // Get all upcoming posts from db
+        app.get('/posts/upcoming', async (req, res) => {
+            const query = { deadline: 1 };
+            const result = await postCollection.find().sort(query).toArray();
             res.send(result);
         })
 
