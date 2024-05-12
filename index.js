@@ -33,6 +33,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         const postCollection = client.db('volunteerDB').collection('posts');
+        const infoCollection = client.db('volunteerDB').collection('info');
 
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
@@ -79,6 +80,22 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await postCollection.findOne(query);
+            res.send(result);
+        })
+
+        // Get a post for be a volunteer from db 
+        app.get('/be-volunteer/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await postCollection.findOne(query);
+            res.send(result);
+        })
+
+        // Insert client request data from db
+        app.post('/request', async (req, res) => {
+            const requestInfo = req.body;
+            console.log(requestInfo);
+            const result = await infoCollection.insertOne(requestInfo);
             res.send(result);
         })
 
