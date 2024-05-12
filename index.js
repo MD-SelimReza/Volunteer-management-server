@@ -74,6 +74,29 @@ async function run() {
             res.send(result);
         })
 
+        // Get a post using id
+        app.get('/update-post/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await postCollection.findOne(query);
+            res.send(result);
+        })
+
+        // Update a post using id
+        app.put('/post/:id', async (req, res) => {
+            const id = req.params.id;
+            const post = req.body;
+            const query = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatePost = {
+                $set: {
+                    ...post
+                }
+            };
+            const result = await postCollection.updateOne(query, updatePost, options);
+            res.send(result);
+        })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
