@@ -95,7 +95,24 @@ async function run() {
         app.post('/request', async (req, res) => {
             const requestInfo = req.body;
             console.log(requestInfo);
+            const query = {
+                volunteer_email: requestInfo.volunteer_email,
+                requestId: requestInfo.requestId
+            };
+            console.log(query);
+            const alreadyApplied = await infoCollection.findOne(query);
+            console.log(alreadyApplied);
+            if (alreadyApplied) {
+                return res.status(400).send('You have already request on this post');
+            }
             const result = await infoCollection.insertOne(requestInfo);
+            // update volunteer number
+            const updateDoc = {
+                $inc: { NoOfVolunteers: -1 },
+            }
+            const requestQuery = { _id: new ObjectId(requestInfo.requestId) };
+            const updateNoOfVolunteer = await postCollection.updateOne(requestQuery, updateDoc);
+            console.log(updateNoOfVolunteer);
             res.send(result);
         })
 
@@ -121,6 +138,7 @@ async function run() {
             const result = await postCollection.deleteOne(query);
             res.send(result);
         })
+
 
         // Get all request posts for a organizer from db 
         app.get('/request/:email', async (req, res) => {
