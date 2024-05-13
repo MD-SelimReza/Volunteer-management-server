@@ -159,13 +159,32 @@ async function run() {
         // Route to fetch all posts
         app.get('/all-post', async (req, res) => {
             const page = parseInt(req.query.page) - 1;
-            const result = await postCollection.find().skip(page * 6).limit(6).toArray();
+            const size = parseInt(req.query.size);
+            const filter = req.query.filter;
+            const sort = req.query.sort;
+            const search = req.query.search;
+
+            let query = { post_title: { $regex: search, $options: 'i' } };
+            if (filter) query = { ...query, category: filter };
+            let options = {}
+            if (sort) options = { sort: { deadline: sort === 'asc' ? 1 : -1 } }
+            const result = await postCollection
+                .find(query, options)
+                .skip(page * size)
+                .limit(size)
+                .toArray();
             res.send(result);
         });
 
         // Route to get total number of posts
         app.get('/total-post', async (req, res) => {
-            const total = await postCollection.countDocuments();
+            const filter = req.query.filter;
+            const search = req.query.search
+            let query = {
+                post_title: { $regex: search, $options: 'i' },
+            }
+            if (filter) query = { ...query, category: filter };
+            const total = await postCollection.countDocuments(query);
             res.send({ total });
         });
 
