@@ -36,22 +36,22 @@ async function run() {
         const infoCollection = client.db('volunteerDB').collection('info');
 
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
-        // Get all posts from db
+        // Route to get all posts from db
         app.get('/posts', async (req, res) => {
             const result = await postCollection.find().toArray();
             res.send(result);
         })
 
-        // Get all upcoming posts from db
+        // Route to get all upcoming posts from db
         app.get('/posts/upcoming', async (req, res) => {
             const query = { deadline: 1 };
             const result = await postCollection.find().sort(query).toArray();
             res.send(result);
         })
 
-        // Get a single post from db by specific id
+        // Route to get a single post from db by specific id
         app.get('/post-details/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -59,7 +59,7 @@ async function run() {
             res.send(result);
         })
 
-        // Insert a post in db
+        // Route to insert a post in db
         app.post('/post', async (req, res) => {
             const post = req.body;
             console.log(post);
@@ -67,7 +67,7 @@ async function run() {
             res.send(result);
         })
 
-        // Get all post posted by a specific user
+        // Route to get all post posted by a specific user
         app.get('/posts/:email', async (req, res) => {
             const email = req.params.email;
             const query = { organizer_email: email };
@@ -75,7 +75,7 @@ async function run() {
             res.send(result);
         })
 
-        // Get a post using id
+        // Route to get a post using id
         app.get('/update-post/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -83,7 +83,7 @@ async function run() {
             res.send(result);
         })
 
-        // Get a post for be a volunteer from db 
+        // Route to get a post for be a volunteer from db 
         app.get('/be-volunteer/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -91,7 +91,7 @@ async function run() {
             res.send(result);
         })
 
-        // Insert client request data from db
+        // Route to insert client request data from db
         app.post('/request', async (req, res) => {
             const requestInfo = req.body;
             console.log(requestInfo);
@@ -100,9 +100,9 @@ async function run() {
                 requestId: requestInfo.requestId
             };
             console.log(query);
-            const alreadyApplied = await infoCollection.findOne(query);
-            console.log(alreadyApplied);
-            if (alreadyApplied) {
+            const alreadyRequest = await infoCollection.findOne(query);
+            console.log(alreadyRequest);
+            if (alreadyRequest) {
                 return res.status(400).send('You have already request on this post');
             }
             const result = await infoCollection.insertOne(requestInfo);
@@ -116,7 +116,7 @@ async function run() {
             res.send(result);
         })
 
-        // Update a post using id
+        // Route to update a post using id
         app.put('/post/:id', async (req, res) => {
             const id = req.params.id;
             const post = req.body;
@@ -131,7 +131,7 @@ async function run() {
             res.send(result);
         })
 
-        // Delete a post using id
+        // Route to delete a post using id
         app.delete('/post/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -140,7 +140,7 @@ async function run() {
         })
 
 
-        // Get all request posts for a organizer from db 
+        // Route to get all request posts for a organizer from db 
         app.get('/request/:email', async (req, res) => {
             const email = req.params.email;
             const query = { organizer_email: email };
@@ -148,13 +148,26 @@ async function run() {
             res.send(result);
         })
 
-        // Delete request post from db
+        // Route to delete request post from db
         app.delete('/request/:email', async (req, res) => {
             const email = req.params.email;
             const query = { volunteer_email: email };
             const result = await infoCollection.deleteOne(query);
             res.send(result);
         })
+
+        // Route to fetch all posts
+        app.get('/all-post', async (req, res) => {
+            const page = parseInt(req.query.page) - 1;
+            const result = await postCollection.find().skip(page * 6).limit(6).toArray();
+            res.send(result);
+        });
+
+        // Route to get total number of posts
+        app.get('/total-post', async (req, res) => {
+            const total = await postCollection.countDocuments();
+            res.send({ total });
+        });
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
