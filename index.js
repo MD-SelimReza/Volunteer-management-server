@@ -122,6 +122,22 @@ async function run() {
             res.send(result);
         })
 
+        // Get all request posts for a organizer from db 
+        app.get('/request/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { organizer_email: email };
+            const result = await infoCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        // Delete request post from db
+        app.delete('/request/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { volunteer_email: email };
+            const result = await infoCollection.deleteOne(query);
+            res.send(result);
+        })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
