@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
@@ -16,7 +18,25 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions));
-app.use(express.json())
+app.use(express.json());
+app.use(cookieParser());
+
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token;
+    if (!token) return res.status(401).send({ message: 'unauthorized access' })
+    // console.log('form verify token', token, req.method, req.url);
+    if (token) {
+        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+            if (err) {
+                // console.log(err);
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            // console.log('form decoded', decoded);
+            req.user = decoded
+            next()
+        })
+    }
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4ldhpeq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -34,6 +54,29 @@ async function run() {
     try {
         const postCollection = client.db('volunteerDB').collection('posts');
         const infoCollection = client.db('volunteerDB').collection('info');
+
+        // jwt implement
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '7d',
+            })
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            }).send({ success: true });
+        });
+
+        // Clear token on logout
+        app.get('/logOut', (req, res) => {
+            res.clearCookie('token', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 0,
+            }).send({ success: true })
+        })
 
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
@@ -68,8 +111,13 @@ async function run() {
         })
 
         // Route to get all post posted by a specific user
-        app.get('/posts/:email', async (req, res) => {
+        app.get('/posts/:email', verifyToken, async (req, res) => {
+            const tokenEmail = req.user.email;
             const email = req.params.email;
+            // console.log(tokenEmail, email, 'form token');
+            if (tokenEmail !== email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             const query = { organizer_email: email };
             const result = await postCollection.find(query).toArray();
             res.send(result);
@@ -141,7 +189,7 @@ async function run() {
 
 
         // Route to get all request posts for a organizer from db 
-        app.get('/request/:email', async (req, res) => {
+        app.get('/request/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { organizer_email: email };
             const result = await infoCollection.find(query).toArray();
@@ -149,7 +197,7 @@ async function run() {
         })
 
         // Route to delete request post from db
-        app.delete('/request/:email', async (req, res) => {
+        app.delete('/request/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { volunteer_email: email };
             const result = await infoCollection.deleteOne(query);
