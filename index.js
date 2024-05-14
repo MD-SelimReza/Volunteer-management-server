@@ -8,7 +8,8 @@ const app = express();
 const corsOptions = {
     origin: [
         'http://localhost:5173',
-        'http://localhost:5174',
+        'https://volunteer-management-406ea.web.app',
+        'https://volunteer-management-406ea.firebaseapp.com'
     ],
     credentials: true,
     optionSuccessStatus: 200,
@@ -16,7 +17,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json())
-console.log(process.env.DB_PASS, process.env.DB_USER);
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4ldhpeq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -62,7 +62,7 @@ async function run() {
         // Route to insert a post in db
         app.post('/post', async (req, res) => {
             const post = req.body;
-            console.log(post);
+            // console.log(post);
             const result = await postCollection.insertOne(post);
             res.send(result);
         })
@@ -94,14 +94,14 @@ async function run() {
         // Route to insert client request data from db
         app.post('/request', async (req, res) => {
             const requestInfo = req.body;
-            console.log(requestInfo);
+            // console.log(requestInfo);
             const query = {
                 volunteer_email: requestInfo.volunteer_email,
                 requestId: requestInfo.requestId
             };
-            console.log(query);
+            // console.log(query);
             const alreadyRequest = await infoCollection.findOne(query);
-            console.log(alreadyRequest);
+            // console.log(alreadyRequest);
             if (alreadyRequest) {
                 return res.status(400).send('You have already request on this post');
             }
@@ -112,7 +112,7 @@ async function run() {
             }
             const requestQuery = { _id: new ObjectId(requestInfo.requestId) };
             const updateNoOfVolunteer = await postCollection.updateOne(requestQuery, updateDoc);
-            console.log(updateNoOfVolunteer);
+            // console.log(updateNoOfVolunteer);
             res.send(result);
         })
 
@@ -189,8 +189,8 @@ async function run() {
         });
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
