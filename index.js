@@ -54,6 +54,8 @@ async function run() {
     try {
         const postCollection = client.db('volunteerDB').collection('posts');
         const infoCollection = client.db('volunteerDB').collection('info');
+        const blogCollection = client.db('volunteerDB').collection('blogs');
+        const servicesCollection = client.db('volunteerDB').collection('services');
 
         // jwt implement
         app.post('/jwt', async (req, res) => {
@@ -235,6 +237,18 @@ async function run() {
             const total = await postCollection.countDocuments(query);
             res.send({ total });
         });
+
+        // Route to get all blogs data from db
+        app.get('/blogs', async (req, res) => {
+            const result = await blogCollection.find().toArray();
+            res.send(result);
+        })
+
+        // Route to get all services data from db
+        app.get('/services', async (req, res) => {
+            const result = await servicesCollection.find().toArray();
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
