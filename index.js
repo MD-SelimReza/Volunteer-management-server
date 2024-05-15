@@ -215,7 +215,7 @@ async function run() {
             let query = { post_title: { $regex: search, $options: 'i' } };
             if (filter) query = { ...query, category: filter };
             let options = {}
-            if (sort) options = { sort: { deadline: sort === 'asc' ? 1 : -1 } }
+            if (sort) options = { sort: { NoOfVolunteers: sort === 'asc' ? 1 : -1 } }
             const result = await postCollection
                 .find(query, options)
                 .skip(page * size)
