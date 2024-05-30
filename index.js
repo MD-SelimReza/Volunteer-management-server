@@ -55,6 +55,7 @@ async function run() {
         const postCollection = client.db('volunteerDB').collection('posts');
         const infoCollection = client.db('volunteerDB').collection('info');
         const blogCollection = client.db('volunteerDB').collection('blogs');
+        const eventCollection = client.db('volunteerDB').collection('events');
         const servicesCollection = client.db('volunteerDB').collection('services');
 
         // jwt implement
@@ -79,9 +80,6 @@ async function run() {
                 maxAge: 0,
             }).send({ success: true })
         })
-
-        // Connect the client to the server	(optional starting in v4.7)
-        // await client.connect();
 
         // Route to get all posts from db
         app.get('/posts', async (req, res) => {
@@ -144,14 +142,11 @@ async function run() {
         // Route to insert client request data from db
         app.post('/request', async (req, res) => {
             const requestInfo = req.body;
-            // console.log(requestInfo);
             const query = {
                 volunteer_email: requestInfo.volunteer_email,
                 requestId: requestInfo.requestId
             };
-            // console.log(query);
             const alreadyRequest = await infoCollection.findOne(query);
-            // console.log(alreadyRequest);
             if (alreadyRequest) {
                 return res.status(400).send('You have already request on this post');
             }
@@ -162,7 +157,6 @@ async function run() {
             }
             const requestQuery = { _id: new ObjectId(requestInfo.requestId) };
             const updateNoOfVolunteer = await postCollection.updateOne(requestQuery, updateDoc);
-            // console.log(updateNoOfVolunteer);
             res.send(result);
         })
 
@@ -247,6 +241,17 @@ async function run() {
         // Route to get all services data from db
         app.get('/services', async (req, res) => {
             const result = await servicesCollection.find().toArray();
+            res.send(result);
+        })
+
+        // Events api
+        app.get('/events', async (req, res) => {
+            const filter = req.query.filter;
+            console.log(filter);
+            let query = {};
+            if (filter) query = { event_category: filter };
+            const result = await eventCollection.find(query).toArray();
+            console.log(result);
             res.send(result);
         })
 
